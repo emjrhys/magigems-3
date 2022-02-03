@@ -1,0 +1,7 @@
+{
+  "semi": false,
+  "singleQuote": true,
+  "pugExplicitDiv": true,
+  "pugWrapAttributesThreshold": 2,
+  "pugClassNotation": "as-is"
+}
