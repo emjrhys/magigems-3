@@ -35,13 +35,7 @@ const colorMap = {
 const gemIcon = computed(() => iconMap[props.color])
 const iconStyle = computed(() => ({
   fill: colorMap[props.color],
+  height: 32,
+  width: 32,
 }))
 </script>
-
-<style lang="sass">
-.grid-slot
-  cursor: pointer
-
-  &.selected
-    background-color: #ddd
-</style>

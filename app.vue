@@ -5,6 +5,7 @@ div#app
 
 <style lang="sass">
 #app
+  position: relative
   display: flex
   flex-direction: column
   justify-content: center
@@ -15,5 +16,5 @@ div#app
 
   overflow: hidden
 
-  background-color: #f5f5f5
+  background-color: #f0f0f0
 </style>

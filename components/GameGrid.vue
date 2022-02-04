@@ -1,5 +1,5 @@
 <template lang="pug">
-div.game-grid-wrapper
+div.game-grid-wrapper(:style='cssVars')
   transition-group(
     class='game-grid',
     name='grid-tile',
@@ -31,16 +31,17 @@ import { sleep } from '~/assets/helpers'
 
 let selectedCell = ref(null)
 let dragStartCell = ref(null)
+let cascading = false
 
 watchEffect(() => console.log(selectedCell.value))
 
 const size = 8
 const game = reactive(new Game(size))
 
-const collectAnimDuration = 0.65
-const swapAnimDuration = 0.25
+const swapAnimDuration = 0.3
+const refillAnimDelay = 0.1
 const refillAnimDuration = 0.25
-const refillAnimDelay = 0.25
+const tileActivateAnimDuration = 0.5
 
 const enter = (el, done) => {
   gsap.from(el, {
@@ -54,37 +55,27 @@ const enter = (el, done) => {
 const leave = (el, done) => {
   gsap
     .timeline({ onComplete: done })
-    // .to(
-    //   el,
-    //   {
-    //     bottom: 0,
-    //     left: '50%',
-    //     duration: collectAnimDuration,
-    //   },
-    //   0
-    // )
     .to(
       el,
       {
-        scale: 1.25,
-        duration: collectAnimDuration / 3,
+        bottom: 20,
+        // left: 20,
+        duration: 0,
       },
       0
     )
     .to(
       el,
       {
-        scale: 0,
         opacity: 0,
-        duration: (collectAnimDuration / 3) * 2,
+        duration: 0,
       },
-      collectAnimDuration / 3
+      0
     )
 }
 
-// check that two tiles are adjacent and swap them
+// check if two tiles are adjacent
 const checkAdjacent = (a, b) => {
-  // check if new selection is adjacent to previous
   const xDistance = Math.abs(a.x - b.x)
   const yDistance = Math.abs(a.y - b.y)
   if (
@@ -97,6 +88,9 @@ const checkAdjacent = (a, b) => {
 
 // set drag start cell
 const handleMouseDown = (x, y) => {
+  // can't make moves while matches are happening
+  if (cascading) return
+
   dragStartCell.value = { x, y }
 }
 
@@ -140,32 +134,45 @@ const handleSwap = async (a, b) => {
   await sleep(swapAnimDuration)
 
   if (game.checkValidMatch()) {
+    cascading = true
     while (game.clusters.length > 0) {
+      // activate matched tiles
+      game.activateClusters()
+      await sleep(tileActivateAnimDuration)
+
+      // clear matches and refill board
       game.resolveClusters()
       await sleep(refillAnimDuration + refillAnimDelay)
+
+      // look for more matches
       game.findClusters()
     }
+    cascading = false
   } else {
     game.swapTiles(b, a)
   }
 }
+
+const cssVars = computed(() => ({
+  '--gridSize': size,
+}))
 </script>
 
-<style lang="sass">
+<style lang="sass" scoped>
 $grid-size: 20rem
 
 // tile swap animation
 .grid-tile-move
-  transition: transform 350ms
+  transition: transform 300ms
 
-.grid-tile-enter-active, .grid-tile-leave-active
+.grid-tile-leave-active
   position: absolute
 
 .game-grid
   position: relative
   display: grid
-  grid-template-columns: repeat(8, 1fr)
-  grid-template-rows: repeat(8, 1fr)
+  grid-template-columns: repeat(var(--gridSize), 1fr)
+  grid-template-rows: repeat(var(--gridSize), 1fr)
   grid-gap: 0.5rem
 
   &-wrapper
@@ -176,7 +183,7 @@ $grid-size: 20rem
 
     background-color: #fff
     border-radius: 1rem
-    box-shadow: 0px 0px 6px 2px rgba(0, 0, 0, 0.1) inset
+    box-shadow: 0px 0px 3px 2px rgba(0, 0, 0, 0.10) inset
 
     overflow: hidden
 </style>

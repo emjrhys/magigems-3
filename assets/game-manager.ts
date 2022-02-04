@@ -2,21 +2,51 @@ import uuid from 'short-uuid'
 import _ from 'lodash'
 
 const colors = ['blue', 'red', 'green', 'yellow', 'pink', 'purple']
+const tileTypes = {
+  gem: {
+    spawnRate: 100,
+    matchType: 'color',
+  },
+  coin: {
+    spawnRate: 7,
+    matchType: 'adjacent',
+  },
+}
+
+const getRandomType = () => {
+  // get types and weights in a better format
+  const typesArray = Object.entries(tileTypes)
+  const totalSpawnRate = typesArray.reduce((r, [_, el]) => r + el.spawnRate, 0)
+
+  // roll for type
+  const spawnRoll = Math.random() * totalSpawnRate
+
+  // find our winner!
+  let rateCounter = 0
+  for (const [k, v] of typesArray) {
+    rateCounter += v.spawnRate
+    if (rateCounter >= spawnRoll) return k
+  }
+}
 
 class Tile {
   id
   type
   color
+  properties
+  activated = ref(false)
 
   constructor() {
     this.id = uuid.generate()
-    this.type = 'gem'
-    this.color = _.sample(colors)
+
+    this.type = getRandomType()
+    this.properties = tileTypes[this.type]
+
+    this.color = this.type === 'gem' ? _.sample(colors) : undefined
   }
 
-  empty = () => {
-    this.type = null
-    this.color = null
+  activate = () => {
+    this.activated.value = true
   }
 }
 
@@ -62,7 +92,7 @@ export class Game {
   findClusters = () => {
     this.clusters = []
 
-    // look for clusters on the Y-axis
+    // look for vertical clusters
     for (let x = 0; x < this.size; x++) {
       let matchLength = 1
       for (let y = 0; y < this.size; y++) {
@@ -70,9 +100,10 @@ export class Game {
 
         // check the color of the next tile if we haven't reached the end or a gap
         if (
-          y < this.size - 1 &&
-          this.grid[x][y] &&
-          this.grid[x][y].color === this.grid[x][y + 1].color
+          y < this.size - 1 && // check we haven't reached the end
+          this.grid[x][y] && // check that the current element exists (should always be true)
+          this.grid[x][y].properties.matchType === 'color' && // check that this element can be matched
+          this.grid[x][y].color === this.grid[x][y + 1].color // check that its color matches the next element
         ) {
           matchLength += 1
         } else {
@@ -94,7 +125,7 @@ export class Game {
       }
     }
 
-    // look for clusters on the X-axis
+    // look for horizontal clusters
     for (let y = 0; y < this.size; y++) {
       let matchLength = 1
       for (let x = 0; x < this.size; x++) {
@@ -102,9 +133,10 @@ export class Game {
 
         // check the color of the next tile if we haven't reached the end or a gap
         if (
-          x < this.size - 1 &&
-          this.grid[x][y] &&
-          this.grid[x][y].color === this.grid[x + 1][y].color
+          x < this.size - 1 && // check we haven't reached the end of the row
+          this.grid[x][y] && // check that the current element exists (should always be true)
+          this.grid[x][y].properties.matchType === 'color' && // check that this element can be matched
+          this.grid[x][y].color === this.grid[x + 1][y].color // check that its color matches the next element
         ) {
           matchLength += 1
         } else {
@@ -134,6 +166,13 @@ export class Game {
       this.grid[x].unshift(new Tile())
     })
     this.clusters = []
+  }
+
+  // set status on all cluster tiles to animate before removing
+  activateClusters = () => {
+    this.loopClusters((x, y) => {
+      this.grid[x][y].activate()
+    })
   }
 
   loopClusters = (fn) => {
