@@ -12,9 +12,9 @@ export default defineNuxtConfig({
       devtools: true,
     },
   },
-  css: ['@/assets/reset.css'],
   buildModules: ['@nuxtjs/svg'],
   modules: ['bootstrap-vue/nuxt'],
+  css: ['@/assets/reset.css'],
   vite: {
     plugins: [svgLoader()],
   },

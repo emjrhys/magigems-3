@@ -1,10 +1,20 @@
 <template lang="pug">
 div.game-grid-wrapper
-  transition-group(class='game-grid', name='grid-list', tag='div')
+  transition-group(
+    class='game-grid',
+    name='grid-tile',
+    tag='div',
+    @enter='enter',
+    @leave='leave'
+  )
     template(v-for='(row, x) in game.grid')
       GridSlot(
         v-for='(item, y) in row',
-        :key='item ? item.id : `${x}_${y}`',
+        :key='item.id',
+        :data-row='y',
+        :data-column='x',
+        :data-color='item.color',
+        :position='{ x, y }',
         :content='item',
         :selected='selectedCell && selectedCell.x === x && selectedCell.y === y',
         @mousedown='handleMouseDown(x, y)',
@@ -14,8 +24,10 @@ div.game-grid-wrapper
 </template>
 
 <script setup lang="ts">
-import uuid from 'short-uuid'
-import _ from 'lodash'
+import { gsap } from 'gsap'
+
+import { Game } from '~/assets/game-manager'
+import { sleep } from '~/assets/helpers'
 
 let selectedCell = ref(null)
 let dragStartCell = ref(null)
@@ -23,6 +35,52 @@ let dragStartCell = ref(null)
 watchEffect(() => console.log(selectedCell.value))
 
 const size = 8
+const game = reactive(new Game(size))
+
+const collectAnimDuration = 0.65
+const swapAnimDuration = 0.25
+const refillAnimDuration = 0.25
+const refillAnimDelay = 0.25
+
+const enter = (el, done) => {
+  gsap.from(el, {
+    y: -50 - 50 * el.dataset.row,
+    duration: refillAnimDuration,
+    delay: refillAnimDelay + el.dataset.column * 0.05,
+    onComplete: done,
+  })
+}
+
+const leave = (el, done) => {
+  gsap
+    .timeline({ onComplete: done })
+    // .to(
+    //   el,
+    //   {
+    //     bottom: 0,
+    //     left: '50%',
+    //     duration: collectAnimDuration,
+    //   },
+    //   0
+    // )
+    .to(
+      el,
+      {
+        scale: 1.25,
+        duration: collectAnimDuration / 3,
+      },
+      0
+    )
+    .to(
+      el,
+      {
+        scale: 0,
+        opacity: 0,
+        duration: (collectAnimDuration / 3) * 2,
+      },
+      collectAnimDuration / 3
+    )
+}
 
 // check that two tiles are adjacent and swap them
 const checkAdjacent = (a, b) => {
@@ -49,7 +107,7 @@ const handleMouseMove = (x, y) => {
     (dragStartCell.value.x !== x || dragStartCell.value.y !== y)
   ) {
     if (checkAdjacent({ x, y }, dragStartCell.value))
-      game.swapTiles({ x, y }, dragStartCell.value)
+      handleSwap({ x, y }, dragStartCell.value)
 
     dragStartCell.value = null
     selectedCell.value = null
@@ -58,10 +116,13 @@ const handleMouseMove = (x, y) => {
 
 // check if we single clicked, not dragged and clear drag event
 const handleMouseUp = (x, y) => {
+  // check if we've already swapped
+  if (!dragStartCell.value) return
+
   if (dragStartCell.value.x === x && dragStartCell.value.y === y) {
     if (selectedCell.value) {
       if (checkAdjacent({ x, y }, selectedCell.value)) {
-        game.swapTiles({ x, y }, selectedCell.value)
+        handleSwap({ x, y }, selectedCell.value)
         selectedCell.value = null
       } else {
         selectedCell.value = { x, y }
@@ -74,213 +135,48 @@ const handleMouseUp = (x, y) => {
   dragStartCell.value = null
 }
 
-/* GAME MANAGER */
-const colors = ['blue', 'red', 'green', 'yellow', 'pink', 'purple']
+const handleSwap = async (a, b) => {
+  game.swapTiles(a, b)
+  await sleep(swapAnimDuration)
 
-class Tile {
-  id
-  type
-  color
-
-  constructor() {
-    this.id = uuid.generate()
-    this.type = 'gem'
-    this.color = _.sample(colors)
-  }
-
-  empty = () => {
-    this.type = null
-    this.color = null
+  if (game.checkValidMatch()) {
+    while (game.clusters.length > 0) {
+      game.resolveClusters()
+      await sleep(refillAnimDuration + refillAnimDelay)
+      game.findClusters()
+    }
+  } else {
+    game.swapTiles(b, a)
   }
 }
-
-class Game {
-  size
-  grid
-  clusters
-
-  constructor(size = 8) {
-    this.size = size
-
-    this.newGame()
-  }
-
-  newGame = () => {
-    this.generateGameGrid()
-  }
-
-  generateGameGrid = () => {
-    const initializeGrid = () => {
-      this.grid = reactive(
-        Array.from(Array(this.size), () =>
-          reactive(Array.from(Array(this.size), () => new Tile()))
-        )
-      )
-    }
-
-    let gameGridValid = false
-    while (!gameGridValid) {
-      initializeGrid()
-
-      // this.resolveClusters()
-
-      if (this.findAvailableMoves().length > 0) gameGridValid = true
-    }
-  }
-
-  // clean up gem clusters and fill empty spaces
-  resolveClusters = () => {
-    const findClusters = () => {
-      this.clusters = []
-
-      // look for clusters on the Y-axis
-      for (let x = 0; x < this.size; x++) {
-        let matchLength = 1
-        for (let y = 0; y < this.size; y++) {
-          let shouldCheckCluster = false
-
-          // check the color of the next tile if we haven't reached the end or a gap
-          if (
-            y < this.size - 1 &&
-            this.grid[x][y] &&
-            this.grid[x][y].color === this.grid[x][y + 1].color
-          ) {
-            matchLength += 1
-          } else {
-            shouldCheckCluster = true
-          }
-
-          if (shouldCheckCluster) {
-            if (matchLength >= 3) {
-              this.clusters.push({
-                row: y + 1 - matchLength,
-                column: x,
-                length: matchLength,
-                horizontal: true,
-              })
-            }
-
-            matchLength = 1
-          }
-        }
-      }
-
-      // look for clusters on the X-axis
-      for (let y = 0; y < this.size; y++) {
-        let matchLength = 1
-        for (let x = 0; x < this.size; x++) {
-          let shouldCheckCluster = false
-
-          // check the color of the next tile if we haven't reached the end or a gap
-          if (
-            x < this.size - 1 &&
-            this.grid[x][y] &&
-            this.grid[x][y].color === this.grid[x + 1][y].color
-          ) {
-            matchLength += 1
-          } else {
-            shouldCheckCluster = true
-          }
-
-          if (shouldCheckCluster) {
-            if (matchLength >= 3) {
-              this.clusters.push({
-                row: y,
-                column: x + 1 - matchLength,
-                length: matchLength,
-                horizontal: false,
-              })
-            }
-
-            matchLength = 1
-          }
-        }
-      }
-    }
-
-    const removeClusters = () => {
-      for (const cluster of this.clusters) {
-        console.log(cluster)
-        for (let i = 0; i < cluster.length; i++) {
-          const x = cluster.column + (cluster.horizontal ? 0 : i)
-          const y = cluster.row + (cluster.horizontal ? i : 0)
-
-          this.grid[x].splice(y, 1)
-          this.grid[x].unshift(new Tile())
-        }
-      }
-    }
-
-    // look for clusters
-    findClusters()
-    removeClusters()
-    //   setTimeout(() => {
-    //     this.shiftTiles()
-    //   }, 1000)
-    // while (this.clusters.length > 0) {
-    //   findClusters()
-    // }
-  }
-
-  // get a list of available moves
-  findAvailableMoves = () => {
-    return [1]
-  }
-
-  // shift tiles down to fill empty spaces
-  shiftTiles = () => {
-    for (let x = 0; x < this.size; x++) {
-      let lowestEmptySpace = this.size - 1 // start at bottom of column
-      for (let y = lowestEmptySpace; y >= 0; y--) {
-        // check that tile is filled
-        if (this.grid[x][y]) {
-          // check if there's empty space below
-          if (lowestEmptySpace > y) {
-            this.swapTiles({ x, y }, { x, lowestEmptySpace })
-            console.log(y, lowestEmptySpace)
-          }
-
-          lowestEmptySpace -= 1
-        }
-      }
-    }
-  }
-
-  // swap tiles between two positions
-  swapTiles = (a, b) => {
-    const temp = this.grid[a.x][a.y]
-    this.grid[a.x][a.y] = this.grid[b.x][b.y]
-    this.grid[b.x][b.y] = temp
-  }
-}
-
-const game = reactive(new Game(size))
 </script>
 
 <style lang="sass">
 $grid-size: 20rem
 
-.grid-list-move
-  transition: transform 500ms
+// tile swap animation
+.grid-tile-move
+  transition: transform 350ms
+
+.grid-tile-enter-active, .grid-tile-leave-active
+  position: absolute
 
 .game-grid
+  position: relative
   display: grid
-  grid-auto-flow: column
   grid-template-columns: repeat(8, 1fr)
   grid-template-rows: repeat(8, 1fr)
   grid-gap: 0.5rem
-
-  height: $grid-size
-  width: $grid-size
 
   &-wrapper
     display: flex
     flex-direction: column
 
-  &-controls
-    display: flex
-    justify-content: space-between
-    align-items: center
+    padding: 1rem
 
-    margin-top: 1rem
+    background-color: #fff
+    border-radius: 1rem
+    box-shadow: 0px 0px 6px 2px rgba(0, 0, 0, 0.1) inset
+
+    overflow: hidden
 </style>

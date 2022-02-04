@@ -14,4 +14,6 @@ div#app
   height: 100vh
 
   overflow: hidden
+
+  background-color: #f5f5f5
 </style>
