@@ -1,7 +1,7 @@
 import uuid from 'short-uuid'
 import _ from 'lodash'
 
-const colors = ['blue', 'red', 'green', 'yellow', 'pink', 'purple']
+const colors = ['blue', 'red', 'green', 'pink', 'purple']
 const tileTypes = {
   gem: {
     spawnRate: 100,
@@ -34,10 +34,12 @@ class Tile {
   type
   color
   properties
+  dropDelay = 0
   activated = ref(false)
 
-  constructor() {
+  constructor(delay = 0) {
     this.id = uuid.generate()
+    this.dropDelay = delay
 
     this.type = getRandomType()
     this.properties = tileTypes[this.type]
@@ -172,7 +174,46 @@ export class Game {
   activateClusters = () => {
     this.loopClusters((x, y) => {
       this.grid[x][y].activate()
+      this.activateAdjacent(x, y)
     })
+  }
+
+  activateAdjacent = (x, y) => {
+    // check left
+    if (x > 0 && this.grid[x - 1][y].properties.matchType === 'adjacent')
+      this.grid[x - 1][y].activate()
+
+    // check right
+    if (
+      x < this.size - 2 &&
+      this.grid[x + 1][y].properties.matchType === 'adjacent'
+    )
+      this.grid[x + 1][y].activate()
+
+    // check up
+    if (y > 0 && this.grid[x][y - 1].properties.matchType === 'adjacent')
+      this.grid[x][y - 1].activate()
+
+    // check down
+    if (
+      y < this.size - 2 &&
+      this.grid[x][y + 1].properties.matchType === 'adjacent'
+    )
+      this.grid[x][y + 1].activate()
+  }
+
+  removeActivated = () => {
+    for (let x = 0; x < this.size; x++) {
+      let numAdded = 0
+      for (let y = 0; y < this.size; y++) {
+        if (this.grid[x][y].activated) {
+          this.grid[x].splice(y, 1)
+          this.grid[x].unshift(new Tile(numAdded))
+
+          numAdded += 1
+        }
+      }
+    }
   }
 
   loopClusters = (fn) => {

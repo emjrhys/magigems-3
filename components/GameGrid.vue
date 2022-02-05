@@ -13,9 +13,10 @@ div.game-grid-wrapper(:style='cssVars')
         :key='item.id',
         :data-row='y',
         :data-column='x',
+        :data-delay='item.dropDelay',
         :data-color='item.color',
         :position='{ x, y }',
-        :content='item',
+        :tile='item',
         :selected='selectedCell && selectedCell.x === x && selectedCell.y === y',
         @mousedown='handleMouseDown(x, y)',
         @mousemove='handleMouseMove(x, y)',
@@ -41,13 +42,14 @@ const game = reactive(new Game(size))
 const swapAnimDuration = 0.3
 const refillAnimDelay = 0.1
 const refillAnimDuration = 0.25
-const tileActivateAnimDuration = 0.5
+const refillCheckDelay = 0.1
+const tileActivateAnimDuration = 0.3
 
 const enter = (el, done) => {
   gsap.from(el, {
-    y: -50 - 50 * el.dataset.row,
+    y: -200,
     duration: refillAnimDuration,
-    delay: refillAnimDelay + el.dataset.column * 0.05,
+    delay: refillAnimDelay + el.dataset.delay * 0.1,
     onComplete: done,
   })
 }
@@ -141,8 +143,8 @@ const handleSwap = async (a, b) => {
       await sleep(tileActivateAnimDuration)
 
       // clear matches and refill board
-      game.resolveClusters()
-      await sleep(refillAnimDuration + refillAnimDelay)
+      game.removeActivated()
+      await sleep(refillAnimDuration + refillAnimDelay + refillCheckDelay)
 
       // look for more matches
       game.findClusters()
@@ -159,8 +161,6 @@ const cssVars = computed(() => ({
 </script>
 
 <style lang="sass" scoped>
-$grid-size: 20rem
-
 // tile swap animation
 .grid-tile-move
   transition: transform 300ms
@@ -170,10 +170,13 @@ $grid-size: 20rem
 
 .game-grid
   position: relative
+
   display: grid
   grid-template-columns: repeat(var(--gridSize), 1fr)
   grid-template-rows: repeat(var(--gridSize), 1fr)
   grid-gap: 0.5rem
+
+  user-select: none
 
   &-wrapper
     display: flex

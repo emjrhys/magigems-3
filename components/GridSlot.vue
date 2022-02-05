@@ -1,16 +1,15 @@
 <template lang="pug">
 div.grid-slot(
-  :class='{ selected, activated: content.activated }',
+  :class='{ selected, activated: tile.activated }',
   :style='slotStyle'
 )
-  GemIcon.grid-slot-icon(v-if='content.type === "gem"', :color='content.color')
-  CoinIcon.grid-slot-icon(v-else-if='content.type === "coin"')
+  TileIcon.grid-slot-icon(:tile='tile')
 </template>
 
 <script setup>
 const props = defineProps({
   position: Object,
-  content: Object,
+  tile: Object,
   selected: Boolean,
 })
 
@@ -23,11 +22,11 @@ const slotStyle = computed(() => ({
 </script>
 
 <style lang="sass">
-$slot-size: 2rem
+$slot-size: 2.5rem
 
 .grid-slot
-  width: 2rem
-  height: 2rem
+  width: $slot-size
+  height: $slot-size
 
   cursor: pointer
 
