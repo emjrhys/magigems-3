@@ -174,6 +174,7 @@ const cssVars = computed(() => ({
 
 .grid-tile-leave-active
   position: absolute
+  z-index: 100
 
 .grid
   position: relative
