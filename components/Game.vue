@@ -1,10 +1,21 @@
 <template lang="pug">
-div.game-wrapper
-  div.game-grid
-    Grid(:game='game', :wallet-position='walletPos')
-  div.game-menu
-    div.game-menu-wallet(ref='walletIcon')
-      img.game-menu-wallet-icon(src='/icons/coin.png')
+div.game-wrapper__outer
+  div.game-wrapper__inner
+    div.game-grid
+      Grid(
+        :game='game',
+        :wallet-position='walletPosition',
+        :spellslot-positions='spellslotPositions'
+      )
+    div.game-spellslot-wrapper
+      div.game-spellslot(
+        v-for='color in colors',
+        :class='color',
+        :ref='(el) => { if (el) spellslotRefs[color] = el; }'
+      )
+  div.game-toolbar
+    div.game-toolbar-wallet
+      img.game-toolbar-wallet-icon(ref='walletIconRef', src='/icons/coin.png')
       p {{ player.money }}
 </template>
 
@@ -12,19 +23,32 @@ div.game-wrapper
 import { Player } from '~/assets/player-manager'
 import { Game } from '~/assets/game-manager'
 
+import { getElementPosition } from '~/assets/helpers'
+
 // UI stuff
-const walletIcon = ref(null)
-const walletPos = computed(() => walletIcon.value?.getBoundingClientRect())
+const walletIconRef = ref(null)
+const walletPosition = computed(() =>
+  walletIconRef.value ? getElementPosition(walletIconRef.value) : undefined
+)
+
+const spellslotRefs = ref({})
+const spellslotPositions = computed(() => {
+  const positions = reactive({})
+  for (const [color, el] of Object.entries(spellslotRefs.value)) {
+    positions[color] = getElementPosition(el)
+  }
+  return positions
+})
 
 // game stuff
-const size = useState('size', () => 8)
+const size = useState('size', () => 9)
 const colors = useState('colors', () => [
   'blue',
   'red',
+  'orange',
   'green',
   'pink',
   'purple',
-  'orange',
 ])
 
 const gameOptions = {
@@ -37,14 +61,36 @@ const game = reactive(new Game(player, gameOptions))
 </script>
 
 <style lang="sass">
+$spellslot-size: 3.5rem
+
 .game
   &-wrapper
-    display: flex
-    flex-direction: column
+    &__outer
+      display: flex
+      flex-direction: column
 
-    overflow: hidden
+      // overflow: hidden
 
-  &-menu
+    &__inner
+      display: flex
+
+  &-spellslot
+    width: $spellslot-size
+    height: $spellslot-size
+
+    border-radius: 50%
+    background-color: #fff
+
+    &-wrapper
+      display: flex
+      flex-direction: column
+      justify-content: space-between
+      align-items: center
+
+      margin-left: 1rem
+      padding: 0.5rem 0
+
+  &-toolbar
     display: flex
     justify-content: space-between
     align-items: center
@@ -56,10 +102,11 @@ const game = reactive(new Game(player, gameOptions))
       align-items: center
 
       width: 6rem
-      padding: 0.5rem 0.75rem
+      height: 3rem
+      padding-left: 0.5rem
 
       background-color: #fff
-      border-radius: 2rem
+      border-radius: 1.5rem
 
       font-size: 1.35rem
       font-weight: 300
@@ -69,8 +116,8 @@ const game = reactive(new Game(player, gameOptions))
         position: relative
         top: -1px
 
-        height: 2rem
-        width: 2rem
+        height: 32px
+        width: 32px
 
         margin-right: 0.35rem
 </style>

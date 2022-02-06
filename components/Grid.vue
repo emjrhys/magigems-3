@@ -13,6 +13,7 @@ div.grid-wrapper(:style='cssVars')
         :key='item.id',
         :data-delay='item.dropDelay',
         :data-type='item.type',
+        :data-color='item.color',
         :position='{ x, y }',
         :tile='item',
         :selected='selectedCell && selectedCell.x === x && selectedCell.y === y',
@@ -23,14 +24,17 @@ div.grid-wrapper(:style='cssVars')
 </template>
 
 <script setup lang="ts">
-import { gsap } from 'gsap'
+import { gsap, Power2 } from 'gsap'
+import MotionPathPlugin from 'gsap/MotionPathPlugin.js'
+gsap.registerPlugin(MotionPathPlugin)
 
 import { Game } from '~/assets/game-manager'
-import { sleep } from '~/assets/helpers'
+import { sleep, getElementPosition } from '~/assets/helpers'
 
 const props = defineProps({
   game: Game,
   walletPosition: Object,
+  spellslotPositions: Object,
 })
 
 const size = useState('size')
@@ -43,44 +47,94 @@ const swapAnimDuration = 0.3
 const refillAnimDelay = 0.1
 const refillAnimDuration = 0.25
 const refillCheckDelay = 0.1
-const tileActivateAnimDuration = 0.3
-const collectAnimDuration = 0.5
+const tileCollectDelay = 0
+const collectAnimDuration = 1
 
 const enter = (el, done) => {
+  const data = { ...el.dataset }
   gsap.from(el, {
     y: -200,
     duration: refillAnimDuration,
-    delay: refillAnimDelay + el.dataset.delay * 0.05,
+    delay: refillAnimDelay + data.delay * 0.05,
     onComplete: done,
   })
 }
 
 const leave = (el, done) => {
-  if (el.dataset.type === 'coin') {
-    const position = el.getBoundingClientRect()
-    gsap
-      .timeline({ onComplete: done })
-      .to(
-        el,
-        {
-          y: props.walletPosition.y - position.y,
-          x: props.walletPosition.x - position.x,
-          duration: collectAnimDuration,
-        },
-        0
-      )
-      .to(
-        el,
-        {
-          opacity: 0,
-          duration: collectAnimDuration / 2,
-        },
-        collectAnimDuration / 2
-      )
-  } else {
-    done()
+  const data = { ...el.dataset }
+  const position = getElementPosition(el)
+  let targetPosition = position
+  let finalSize = 0.5
+
+  if (data.type === 'coin') {
+    targetPosition = props.walletPosition
+    finalSize = 0.75
+  } else if (data.type === 'gem') {
+    targetPosition = props.spellslotPositions[data.color]
   }
-  // done()
+
+  const destination = {
+    x: targetPosition.x - position.x,
+    y: targetPosition.y - position.y,
+  }
+
+  let path = [
+    { x: 0, y: 0 },
+    {
+      x: 10 * (destination.x < 0 ? 1 : -1),
+      y: 30 * (destination.y < 0 ? 1 : -1),
+    },
+    {
+      x: -10 * (destination.x < 0 ? 1 : -1),
+      y: 30 * (destination.y < 0 ? 1 : -1),
+    },
+    {
+      x: destination.x,
+      y: destination.y,
+    },
+  ]
+
+  // TODO: clean this up
+  if (data.type === 'coin') path.splice(1, 2)
+
+  gsap
+    .timeline({ onComplete: done })
+    .to(
+      el,
+      {
+        duration: collectAnimDuration,
+        motionPath: {
+          path: path,
+          curviness: 1,
+        },
+        ease: Power2.easeIn,
+      },
+      0
+    )
+    .to(
+      el,
+      {
+        scale: 1.5,
+        duration: collectAnimDuration * 0.3,
+      },
+      0
+    )
+    .to(
+      el,
+      {
+        scale: finalSize,
+        duration: collectAnimDuration * 0.7,
+      },
+      collectAnimDuration * 0.3
+    )
+    .to(
+      el,
+      {
+        opacity: 0,
+        duration: collectAnimDuration * 0.1,
+      },
+      collectAnimDuration * 0.9
+    )
 }
 
 // check if two tiles are adjacent
@@ -139,15 +193,16 @@ const handleMouseUp = (x, y) => {
 }
 
 const handleSwap = async (a, b) => {
+  cascading = true
+
   props.game.swapTiles(a, b)
   await sleep(swapAnimDuration)
 
   if (props.game.checkValidMatch()) {
-    cascading = true
     while (props.game.clusters.length > 0) {
       // activate matched tiles
       props.game.activateClusters()
-      await sleep(tileActivateAnimDuration)
+      await sleep(tileCollectDelay)
 
       // clear matches and refill board
       props.game.removeActivated()
@@ -156,10 +211,10 @@ const handleSwap = async (a, b) => {
       // look for more matches
       props.game.findClusters()
     }
-    cascading = false
   } else {
     props.game.swapTiles(b, a)
   }
+  cascading = false
 }
 
 const cssVars = computed(() => ({

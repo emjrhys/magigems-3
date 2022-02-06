@@ -32,14 +32,13 @@ $slot-size: 2.5rem
 
   cursor: pointer
 
+  filter: drop-shadow(0px 0px 3px red)
+
   &.selected
     background-color: #ddd
 
-  &.gem.activated
-    animation: gemCollect 500ms
-
-  &.coin.activated
-    animation: coinCollect 500ms
+  &.activated
+    // animation: coinCollect 150ms
     position: absolute
 
 @keyframes gemCollect
