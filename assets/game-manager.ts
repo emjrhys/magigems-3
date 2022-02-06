@@ -1,7 +1,6 @@
 import uuid from 'short-uuid'
 import _ from 'lodash'
 
-const colors = ['blue', 'red', 'green', 'pink', 'purple', 'orange']
 const tileTypes = {
   gem: {
     spawnRate: 100,
@@ -37,14 +36,14 @@ class Tile {
   dropDelay = 0
   activated = ref(false)
 
-  constructor(delay = 0) {
+  constructor(colorOptions, delay = 0) {
     this.id = uuid.generate()
     this.dropDelay = delay
 
     this.type = getRandomType()
     this.properties = tileTypes[this.type]
 
-    this.color = this.type === 'gem' ? _.sample(colors) : undefined
+    this.color = this.type === 'gem' ? _.sample(colorOptions) : undefined
   }
 
   activate = () => {
@@ -57,10 +56,13 @@ export class Game {
   grid
   clusters
   player
+  colorOptions
 
-  constructor(size = 8, player) {
-    this.size = size
+  constructor(player, options) {
     this.player = player
+
+    this.size = options.size
+    this.colorOptions = options.colors
 
     this.newGame()
   }
@@ -73,7 +75,9 @@ export class Game {
     const initializeGrid = () => {
       this.grid = reactive(
         Array.from(Array(this.size), () =>
-          reactive(Array.from(Array(this.size), () => new Tile()))
+          reactive(
+            Array.from(Array(this.size), () => new Tile(this.colorOptions))
+          )
         )
       )
     }
@@ -167,7 +171,7 @@ export class Game {
   resolveClusters = () => {
     this.loopClusters((x, y) => {
       this.grid[x].splice(y, 1)
-      this.grid[x].unshift(new Tile())
+      this.grid[x].push(new Tile(this.colorOptions))
     })
     this.clusters = []
   }
@@ -192,11 +196,11 @@ export class Game {
     )
       this.grid[x + 1][y].activate()
 
-    // check up
+    // check down
     if (y > 0 && this.grid[x][y - 1].properties.matchType === 'adjacent')
       this.grid[x][y - 1].activate()
 
-    // check down
+    // check up
     if (
       y < this.size - 1 &&
       this.grid[x][y + 1].properties.matchType === 'adjacent'
@@ -207,12 +211,12 @@ export class Game {
   removeActivated = () => {
     for (let x = 0; x < this.size; x++) {
       let numAdded = 0
-      for (let y = 0; y < this.size; y++) {
+      for (let y = this.size - 1; y >= 0; y--) {
         if (this.grid[x][y].activated) {
           const removedTiles = this.grid[x].splice(y, 1)
           this.player.collect(removedTiles[0])
 
-          this.grid[x].unshift(new Tile(numAdded))
+          this.grid[x].push(new Tile(this.colorOptions, numAdded))
 
           numAdded += 1
         }
@@ -222,7 +226,7 @@ export class Game {
 
   loopClusters = (fn) => {
     for (const cluster of this.clusters) {
-      for (let i = 0; i < cluster.length; i++) {
+      for (let i = cluster.length - 1; i >= 0; i--) {
         const x = cluster.column + (cluster.horizontal ? 0 : i)
         const y = cluster.row + (cluster.horizontal ? i : 0)
 

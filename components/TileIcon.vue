@@ -27,8 +27,6 @@ const cssVars = computed(() => ({
   '--animationDuration': `${shineInterval}s`,
   '--animationDelay': `${Math.random() * shineInterval}s`,
 }))
-
-console.log(cssVars.value)
 </script>
 
 <style lang="sass" scoped>

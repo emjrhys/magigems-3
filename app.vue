@@ -1,6 +1,6 @@
 <template lang="pug">
 div#app
-  GameGrid
+  Game
 </template>
 
 <style lang="sass">

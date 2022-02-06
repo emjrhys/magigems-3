@@ -1,6 +1,6 @@
 <template lang="pug">
 div.grid-slot(
-  :class='{ selected, activated: tile.activated }',
+  :class='[{ selected, activated: tile.activated }, props.tile.type]',
   :style='slotStyle'
 )
   TileIcon.grid-slot-icon(:tile='tile')
@@ -13,11 +13,13 @@ const props = defineProps({
   selected: Boolean,
 })
 
+const size = useState('size')
+
 const slotStyle = computed(() => ({
   'grid-column-start': props.position ? props.position.x + 1 : undefined,
   'grid-column-end': props.position ? props.position.x + 1 : undefined,
-  'grid-row-start': props.position ? props.position.y + 1 : undefined,
-  'grid-row-end': props.position ? props.position.y + 1 : undefined,
+  'grid-row-start': props.position ? size.value - props.position.y : undefined,
+  'grid-row-end': props.position ? size.value - props.position.y : undefined,
 }))
 </script>
 
@@ -33,11 +35,14 @@ $slot-size: 2.5rem
   &.selected
     background-color: #ddd
 
-  &.activated
-    animation: collect 500ms
+  &.gem.activated
+    animation: gemCollect 500ms
+
+  &.coin.activated
+    animation: coinCollect 500ms
     position: absolute
 
-@keyframes collect
+@keyframes gemCollect
   0%
     transform: scale(1)
     opacity: 1
@@ -47,4 +52,10 @@ $slot-size: 2.5rem
   100%
     transform: scale(0.75)
     opacity: 0
+
+@keyframes coinCollect
+  0%
+    transform: scale(1)
+  100%
+    transform: scale(1.25)
 </style>

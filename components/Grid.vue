@@ -1,58 +1,50 @@
 <template lang="pug">
-div.game-wrapper-wrapper
-  div.game-grid-wrapper(:style='cssVars')
-    transition-group(
-      class='game-grid',
-      name='grid-tile',
-      tag='div',
-      @enter='enter',
-      @leave='leave'
-    )
-      template(v-for='(row, x) in game.grid')
-        GridSlot(
-          v-for='(item, y) in row',
-          :key='item.id',
-          :data-delay='item.dropDelay',
-          :data-type='item.type',
-          :position='{ x, y }',
-          :tile='item',
-          :selected='selectedCell && selectedCell.x === x && selectedCell.y === y',
-          @mousedown='handleMouseDown(x, y)',
-          @mousemove='handleMouseMove(x, y)',
-          @mouseup='handleMouseUp(x, y)'
-        )
-
-  div.game-menu
-    div.wallet
-      img.wallet-icon(ref='walletIcon', src='/icons/coin.png')
-      p {{ player.money }}
+div.grid-wrapper(:style='cssVars')
+  transition-group(
+    class='grid',
+    name='grid-tile',
+    tag='div',
+    @enter='enter',
+    @leave='leave'
+  )
+    template(v-for='(row, x) in game.grid')
+      GridSlot(
+        v-for='(item, y) in row',
+        :key='item.id',
+        :data-delay='item.dropDelay',
+        :data-type='item.type',
+        :position='{ x, y }',
+        :tile='item',
+        :selected='selectedCell && selectedCell.x === x && selectedCell.y === y',
+        @mousedown='handleMouseDown(x, y)',
+        @mousemove='handleMouseMove(x, y)',
+        @mouseup='handleMouseUp(x, y)'
+      )
 </template>
 
 <script setup lang="ts">
 import { gsap } from 'gsap'
 
-import { Player } from '~/assets/player-manager'
 import { Game } from '~/assets/game-manager'
 import { sleep } from '~/assets/helpers'
+
+const props = defineProps({
+  game: Game,
+  walletPosition: Object,
+})
+
+const size = useState('size')
 
 let selectedCell = ref(null)
 let dragStartCell = ref(null)
 let cascading = false
-
-const walletIcon = ref(null)
-const walletPos = computed(() => walletIcon.value.getBoundingClientRect())
-
-watchEffect(() => console.log(selectedCell.value))
-
-const size = 8
-const player = reactive(new Player())
-const game = reactive(new Game(size, player))
 
 const swapAnimDuration = 0.3
 const refillAnimDelay = 0.1
 const refillAnimDuration = 0.25
 const refillCheckDelay = 0.1
 const tileActivateAnimDuration = 0.3
+const collectAnimDuration = 0.5
 
 const enter = (el, done) => {
   gsap.from(el, {
@@ -64,22 +56,31 @@ const enter = (el, done) => {
 }
 
 const leave = (el, done) => {
-  // if (el.dataset.type === 'coin') {
-  //   const position = el.getBoundingClientRect()
-  //   gsap.timeline({ onComplete: done }).to(
-  //     el,
-  //     {
-  //       y: walletPos.value.y - position.y,
-  //       x: walletPos.value.x - position.x,
-  //       duration: 1,
-  //       onComplete: done,
-  //     },
-  //     0
-  //   )
-  // } else {
-  //   done()
-  // }
-  done()
+  if (el.dataset.type === 'coin') {
+    const position = el.getBoundingClientRect()
+    gsap
+      .timeline({ onComplete: done })
+      .to(
+        el,
+        {
+          y: props.walletPosition.y - position.y,
+          x: props.walletPosition.x - position.x,
+          duration: collectAnimDuration,
+        },
+        0
+      )
+      .to(
+        el,
+        {
+          opacity: 0,
+          duration: collectAnimDuration / 2,
+        },
+        collectAnimDuration / 2
+      )
+  } else {
+    done()
+  }
+  // done()
 }
 
 // check if two tiles are adjacent
@@ -138,31 +139,31 @@ const handleMouseUp = (x, y) => {
 }
 
 const handleSwap = async (a, b) => {
-  game.swapTiles(a, b)
+  props.game.swapTiles(a, b)
   await sleep(swapAnimDuration)
 
-  if (game.checkValidMatch()) {
+  if (props.game.checkValidMatch()) {
     cascading = true
-    while (game.clusters.length > 0) {
+    while (props.game.clusters.length > 0) {
       // activate matched tiles
-      game.activateClusters()
+      props.game.activateClusters()
       await sleep(tileActivateAnimDuration)
 
       // clear matches and refill board
-      game.removeActivated()
+      props.game.removeActivated()
       await sleep(refillAnimDuration + refillAnimDelay + refillCheckDelay)
 
       // look for more matches
-      game.findClusters()
+      props.game.findClusters()
     }
     cascading = false
   } else {
-    game.swapTiles(b, a)
+    props.game.swapTiles(b, a)
   }
 }
 
 const cssVars = computed(() => ({
-  '--gridSize': size,
+  '--gridSize': size.value,
 }))
 </script>
 
@@ -174,11 +175,7 @@ const cssVars = computed(() => ({
 .grid-tile-leave-active
   position: absolute
 
-.game-wrapper-wrapper
-  display: flex
-  flex-direction: column
-
-.game-grid
+.grid
   position: relative
 
   display: grid
@@ -198,34 +195,5 @@ const cssVars = computed(() => ({
     border-radius: 24px
     // box-shadow: 0px 0px 3px 2px rgba(0, 0, 0, 0.10) inset
 
-    overflow: hidden
-
-.game-menu
-  display: flex
-  justify-content: space-between
-  align-items: center
-
-  margin-top: 1rem
-
-.wallet
-  display: flex
-  align-items: center
-
-  width: 6rem
-  padding: 0.5rem 0.75rem
-
-  background-color: #fff
-  border-radius: 2rem
-
-  font-size: 1.35rem
-  font-weight: 400
-
-  &-icon
-    position: relative
-    top: -1px
-
-    height: 2rem
-    width: 2rem
-
-    margin-right: 0.35rem
+    // overflow: hidden
 </style>
