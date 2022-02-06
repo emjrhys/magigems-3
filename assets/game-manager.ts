@@ -1,7 +1,7 @@
 import uuid from 'short-uuid'
 import _ from 'lodash'
 
-const colors = ['blue', 'red', 'green', 'pink', 'purple']
+const colors = ['blue', 'red', 'green', 'pink', 'purple', 'orange']
 const tileTypes = {
   gem: {
     spawnRate: 100,
@@ -56,9 +56,11 @@ export class Game {
   size
   grid
   clusters
+  player
 
-  constructor(size = 8) {
+  constructor(size = 8, player) {
     this.size = size
+    this.player = player
 
     this.newGame()
   }
@@ -185,7 +187,7 @@ export class Game {
 
     // check right
     if (
-      x < this.size - 2 &&
+      x < this.size - 1 &&
       this.grid[x + 1][y].properties.matchType === 'adjacent'
     )
       this.grid[x + 1][y].activate()
@@ -196,7 +198,7 @@ export class Game {
 
     // check down
     if (
-      y < this.size - 2 &&
+      y < this.size - 1 &&
       this.grid[x][y + 1].properties.matchType === 'adjacent'
     )
       this.grid[x][y + 1].activate()
@@ -207,7 +209,9 @@ export class Game {
       let numAdded = 0
       for (let y = 0; y < this.size; y++) {
         if (this.grid[x][y].activated) {
-          this.grid[x].splice(y, 1)
+          const removedTiles = this.grid[x].splice(y, 1)
+          this.player.collect(removedTiles[0])
+
           this.grid[x].unshift(new Tile(numAdded))
 
           numAdded += 1

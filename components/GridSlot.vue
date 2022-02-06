@@ -45,6 +45,6 @@ $slot-size: 2.5rem
     transform: scale(1.25)
     opacity: 1
   100%
-    transform: scale(1)
+    transform: scale(0.75)
     opacity: 0
 </style>

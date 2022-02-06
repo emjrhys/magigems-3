@@ -1,5 +1,6 @@
 <template lang="pug">
-img.tile-icon(:src='iconSrc')
+div.tile-icon-wrapper(:class='props.tile.type', :style='cssVars')
+  img.tile-icon(:src='iconSrc')
 </template>
 
 <script setup>
@@ -19,6 +20,15 @@ const iconSrc = computed(() => {
   }
   return `/icons/${iconName}.png`
 })
+
+const shineInterval = 10
+
+const cssVars = computed(() => ({
+  '--animationDuration': `${shineInterval}s`,
+  '--animationDelay': `${Math.random() * shineInterval}s`,
+}))
+
+console.log(cssVars.value)
 </script>
 
 <style lang="sass" scoped>
@@ -26,5 +36,32 @@ const iconSrc = computed(() => {
   width: 100%
   height: 100%
 
-  pointer-events: none
+  &-wrapper
+    pointer-events: none
+    overflow: hidden
+    position: relative
+
+    &.coin::after
+      content: ''
+      position: absolute
+
+      width: 50%
+      height: 120%
+      opacity: 0
+      transform: rotate(45deg)
+
+      background: #fff
+
+      animation: shine var(--animationDuration) linear var(--animationDelay) infinite
+
+@keyframes shine
+  0%
+    opacity: 0.65
+    top: -80%
+    left: -50%
+
+  5%, 100%
+    opacity: 0
+    top: 50%
+    left: 80%
 </style>
