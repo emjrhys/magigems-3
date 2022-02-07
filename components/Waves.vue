@@ -5,7 +5,8 @@ div
     xmlns:xlink='http://www.w3.org/1999/xlink',
     viewbox='0 0 56 56',
     preserveaspectratio='none',
-    shape-rendering='auto'
+    shape-rendering='auto',
+    :style='{ transform: `translateY(${Math.random() * 56}px)` }'
   )
     defs
       path#gentle-wave(

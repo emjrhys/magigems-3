@@ -19,7 +19,7 @@ $spellslot-size: 3.5rem
   height: $spellslot-size
 
   border-radius: 50%
-  background-color: #fff
+  background-color: #eee
 
   overflow: hidden
 </style>

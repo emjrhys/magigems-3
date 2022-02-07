@@ -11,7 +11,7 @@ div.grid-wrapper(:style='cssVars')
       GridSlot(
         v-for='(item, y) in row',
         :key='item.id',
-        :data-delay='item.dropDelay',
+        :data-delay='item.delay',
         :data-type='item.type',
         :data-color='item.color',
         :position='{ x, y }',
@@ -98,7 +98,7 @@ const leave = (el, done) => {
   if (data.type === 'coin') path.splice(1, 2)
 
   gsap
-    .timeline({ onComplete: done })
+    .timeline({ onComplete: done, delay: data.delay * 0.05 })
     .to(
       el,
       {

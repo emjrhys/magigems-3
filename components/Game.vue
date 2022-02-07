@@ -67,7 +67,7 @@ const game = reactive(new Game(player, gameOptions))
       display: flex
       flex-direction: column
 
-      // overflow: hidden
+      overflow: hidden
 
     &__inner
       display: flex
@@ -80,7 +80,9 @@ const game = reactive(new Game(player, gameOptions))
       align-items: center
 
       margin-left: 1rem
-      padding: 0.5rem 0
+      background-color: #fff
+      border-radius: 2rem
+      padding: 0.5rem
 
   &-toolbar
     display: flex

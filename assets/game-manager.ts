@@ -33,12 +33,12 @@ class Tile {
   type
   color
   properties
-  dropDelay = 0
+  delay = 0
   activated = ref(false)
 
   constructor(colorOptions, delay = 0) {
     this.id = uuid.generate()
-    this.dropDelay = delay
+    this.delay = delay
 
     this.type = getRandomType()
     this.properties = tileTypes[this.type]
@@ -178,8 +178,10 @@ export class Game {
 
   // set status on all cluster tiles to animate before removing
   activateClusters = () => {
-    this.loopClusters((x, y) => {
+    this.loopClusters((x, y, i) => {
       this.grid[x][y].activate()
+      console.log(i)
+      this.grid[x][y].delay = i
       this.activateAdjacent(x, y)
     })
   }
@@ -210,15 +212,15 @@ export class Game {
 
   removeActivated = () => {
     for (let x = 0; x < this.size; x++) {
-      let numAdded = 0
+      let numInColumn = 0
       for (let y = this.size - 1; y >= 0; y--) {
         if (this.grid[x][y].activated) {
-          const removedTiles = this.grid[x].splice(y, 1)
-          this.player.collect(removedTiles[0])
+          const tile = this.grid[x].splice(y, 1)[0]
+          this.player.collect(tile)
 
-          this.grid[x].push(new Tile(this.colorOptions, numAdded))
+          this.grid[x].push(new Tile(this.colorOptions, numInColumn))
 
-          numAdded += 1
+          numInColumn += 1
         }
       }
     }
@@ -230,7 +232,7 @@ export class Game {
         const x = cluster.column + (cluster.horizontal ? 0 : i)
         const y = cluster.row + (cluster.horizontal ? i : 0)
 
-        fn(x, y)
+        fn(x, y, i, cluster)
       }
     }
   }
