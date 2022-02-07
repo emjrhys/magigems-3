@@ -13,16 +13,9 @@ div
         d='M 0 5 c 30 0 50 -5 80 -5 s 50 5 80 5 s 50 -5 80 -5 s 50 5 80 5 v 60 h -320 z'
       )
     g.parallax
-      use(
-        xlink:href='#gentle-wave',
-        x='0',
-        y='0'
-      )
-      use(
-        xlink:href='#gentle-wave',
-        x='0',
-        y='0'
-      )
+      use(xlink:href='#gentle-wave')
+      use(xlink:href='#gentle-wave')
+      use(xlink:href='#gentle-wave')
 </template>
 
 <style scoped lang="sass">
@@ -37,13 +30,18 @@ div
     animation: move-forever 25s cubic-bezier(0.55, 0.5, 0.45, 0.5) infinite
 
   & > use:nth-child(1)
-    fill: rgba(#F94144, 0.8)
+    fill: rgba(#F94144, 0.3)
     animation-delay: -4s
     animation-duration: 3s
 
   & > use:nth-child(2)
-    fill: #F94144
+    fill: rgba(#F94144, 0.6)
     animation-delay: -5s
+    animation-duration: 5s
+
+  & > use:nth-child(3)
+    fill: #F94144
+    animation-delay: -6s
     animation-duration: 5s
 
 @keyframes move-forever

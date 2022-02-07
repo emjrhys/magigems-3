@@ -224,7 +224,7 @@ const cssVars = computed(() => ({
 
 <style scoped lang="sass">
 // tile swap animation
-.grid-tile-move
+.grid-tile-move:not(.activated)
   transition: transform 300ms
 
 .grid-tile-leave-active
