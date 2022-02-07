@@ -29,7 +29,7 @@ const cssVars = computed(() => ({
 }))
 </script>
 
-<style lang="sass" scoped>
+<style scoped lang="sass">
 .tile-icon
   width: 100%
   height: 100%

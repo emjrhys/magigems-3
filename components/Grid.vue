@@ -222,7 +222,7 @@ const cssVars = computed(() => ({
 }))
 </script>
 
-<style lang="sass" scoped>
+<style scoped lang="sass">
 // tile swap animation
 .grid-tile-move
   transition: transform 300ms

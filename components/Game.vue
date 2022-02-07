@@ -10,9 +10,9 @@ div.game-wrapper__outer
     div.game-spellslot-wrapper
       div.game-spellslot(
         v-for='color in colors',
-        :class='color',
         :ref='(el) => { if (el) spellslotRefs[color] = el; }'
       )
+        Spellslot(:color='color')
   div.game-toolbar
     div.game-toolbar-wallet
       img.game-toolbar-wallet-icon(ref='walletIconRef', src='/icons/coin.png')
@@ -61,8 +61,6 @@ const game = reactive(new Game(player, gameOptions))
 </script>
 
 <style lang="sass">
-$spellslot-size: 3.5rem
-
 .game
   &-wrapper
     &__outer
@@ -75,12 +73,6 @@ $spellslot-size: 3.5rem
       display: flex
 
   &-spellslot
-    width: $spellslot-size
-    height: $spellslot-size
-
-    border-radius: 50%
-    background-color: #fff
-
     &-wrapper
       display: flex
       flex-direction: column
