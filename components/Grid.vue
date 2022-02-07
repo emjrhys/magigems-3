@@ -51,7 +51,7 @@ const cascadeAnimDelay = 0.1
 const refillAnimDuration = 0.25
 const refillCheckDelay = 0.1
 const tileCollectDelay = 0
-const collectAnimDuration = 1
+const collectAnimDuration = 0.65
 
 const enter = (el, done) => {
   const data = { ...el.dataset }

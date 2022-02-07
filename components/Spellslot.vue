@@ -13,7 +13,7 @@ const colorMap = useState('colorMap')
 
 <style lang="sass">
 // TODO: move this to variables
-$spellslot-size: 3.5rem
+$spellslot-size: 2.5rem
 
 .spellslot
   position: relative
@@ -24,4 +24,10 @@ $spellslot-size: 3.5rem
   background-color: #eee
 
   overflow: hidden
+  cursor: pointer
+
+  transition: transform 150ms
+
+  &:hover
+    transform: scale(1.25)
 </style>

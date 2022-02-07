@@ -80,6 +80,7 @@ const game = reactive(new Game(player, gameOptions))
 
     &__inner
       display: flex
+      align-items: center
 
   &-spellslot
     &-wrapper
@@ -88,10 +89,12 @@ const game = reactive(new Game(player, gameOptions))
       justify-content: space-between
       align-items: center
 
+      height: 20rem
       margin-left: 1rem
+      padding: 0.5rem
+
       background-color: #fff
       border-radius: 2rem
-      padding: 0.5rem
 
   &-toolbar
     display: flex
