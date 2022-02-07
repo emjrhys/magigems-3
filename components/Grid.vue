@@ -17,6 +17,7 @@ div.grid-wrapper(:style='cssVars')
         :position='{ x, y }',
         :tile='item',
         :selected='selectedCell && selectedCell.x === x && selectedCell.y === y',
+        :lastMove='lastMove',
         @mousedown='handleMouseDown(x, y)',
         @mousemove='handleMouseMove(x, y)',
         @mouseup='handleMouseUp(x, y)'
@@ -39,12 +40,14 @@ const props = defineProps({
 
 const size = useState('size')
 
-let selectedCell = ref(null)
-let dragStartCell = ref(null)
-let cascading = false
+const selectedCell = ref(null)
+const dragStartCell = ref(null)
+const cascading = useState('cascading', () => false)
+
+const lastMove = computed(() => props.game.moveHistory.at(-1))
 
 const swapAnimDuration = 0.3
-const refillAnimDelay = 0.1
+const cascadeAnimDelay = 0.1
 const refillAnimDuration = 0.25
 const refillCheckDelay = 0.1
 const tileCollectDelay = 0
@@ -55,7 +58,7 @@ const enter = (el, done) => {
   gsap.from(el, {
     y: -200,
     duration: refillAnimDuration,
-    delay: refillAnimDelay + data.delay * 0.05,
+    delay: cascadeAnimDelay + data.delay * 0.05,
     onComplete: done,
   })
 }
@@ -152,7 +155,7 @@ const checkAdjacent = (a, b) => {
 // set drag start cell
 const handleMouseDown = (x, y) => {
   // can't make moves while matches are happening
-  if (cascading) return
+  if (cascading.value) return
 
   dragStartCell.value = { x, y }
 }
@@ -193,9 +196,10 @@ const handleMouseUp = (x, y) => {
 }
 
 const handleSwap = async (a, b) => {
-  cascading = true
-
   props.game.swapTiles(a, b)
+  await nextTick()
+  cascading.value = true
+
   await sleep(swapAnimDuration)
 
   if (props.game.checkValidMatch()) {
@@ -206,19 +210,20 @@ const handleSwap = async (a, b) => {
 
       // clear matches and refill board
       props.game.removeActivated()
-      await sleep(refillAnimDuration + refillAnimDelay + refillCheckDelay)
+      await sleep(refillAnimDuration + cascadeAnimDelay + refillCheckDelay)
 
       // look for more matches
       props.game.findClusters()
     }
   } else {
-    props.game.swapTiles(b, a)
+    props.game.undoMove()
   }
-  cascading = false
+  cascading.value = false
 }
 
 const cssVars = computed(() => ({
   '--gridSize': size.value,
+  '--cascadeDelay': cascadeAnimDelay,
 }))
 </script>
 
@@ -226,6 +231,9 @@ const cssVars = computed(() => ({
 // tile swap animation
 .grid-tile-move:not(.activated)
   transition: transform 300ms
+
+  // &.cascading
+  //   transition: transform 500ms ease-in var(--cascadeDelay)
 
 .grid-tile-leave-active
   position: absolute
@@ -249,7 +257,4 @@ const cssVars = computed(() => ({
 
     background-color: #fff
     border-radius: 24px
-    // box-shadow: 0px 0px 3px 2px rgba(0, 0, 0, 0.10) inset
-
-    // overflow: hidden
 </style>

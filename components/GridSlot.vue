@@ -1,8 +1,5 @@
 <template lang="pug">
-div.grid-slot(
-  :class='[{ selected, activated: tile.activated }, props.tile.type]',
-  :style='slotStyle'
-)
+div.grid-slot(:class='slotClasses', :style='slotStyle')
   TileIcon.grid-slot-icon(:tile='tile')
 </template>
 
@@ -14,6 +11,14 @@ const props = defineProps({
 })
 
 const size = useState('size')
+
+const slotClasses = computed(() => [
+  {
+    selected: props.selected,
+    activated: props.tile.activated,
+  },
+  props.tile.type,
+])
 
 const slotStyle = computed(() => ({
   'grid-column-start': props.position ? props.position.x + 1 : undefined,

@@ -1,5 +1,5 @@
 <template lang="pug">
-div
+div(:style='cssVars')
   svg.waves(
     xmlns='http://www.w3.org/2000/svg',
     xmlns:xlink='http://www.w3.org/1999/xlink',
@@ -18,6 +18,16 @@ div
       use(xlink:href='#gentle-wave')
 </template>
 
+<script setup lang="ts">
+const props = defineProps({
+  color: String,
+})
+
+const cssVars = computed(() => ({
+  '--color': props.color,
+}))
+</script>
+
 <style scoped lang="sass">
 .waves
   // position: relative
@@ -30,17 +40,17 @@ div
     animation: move-forever 25s cubic-bezier(0.55, 0.5, 0.45, 0.5) infinite
 
   & > use:nth-child(1)
-    fill: rgba(#F94144, 0.3)
+    fill: rgba(var(--color), 0.3)
     animation-delay: -4s
     animation-duration: 3s
 
   & > use:nth-child(2)
-    fill: rgba(#F94144, 0.6)
+    fill: rgba(var(--color), 0.6)
     animation-delay: -5s
     animation-duration: 5s
 
   & > use:nth-child(3)
-    fill: #F94144
+    fill: var(--color)
     animation-delay: -6s
     animation-duration: 5s
 

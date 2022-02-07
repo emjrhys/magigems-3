@@ -53,10 +53,12 @@ class Tile {
 
 export class Game {
   size
-  grid
-  clusters
   player
   colorOptions
+
+  grid
+  clusters
+  moveHistory = reactive([])
 
   constructor(player, options) {
     this.player = player
@@ -180,7 +182,6 @@ export class Game {
   activateClusters = () => {
     this.loopClusters((x, y, i) => {
       this.grid[x][y].activate()
-      console.log(i)
       this.grid[x][y].delay = i
       this.activateAdjacent(x, y)
     })
@@ -227,12 +228,15 @@ export class Game {
   }
 
   loopClusters = (fn) => {
+    let count = 0
     for (const cluster of this.clusters) {
       for (let i = cluster.length - 1; i >= 0; i--) {
         const x = cluster.column + (cluster.horizontal ? 0 : i)
         const y = cluster.row + (cluster.horizontal ? i : 0)
 
-        fn(x, y, i, cluster)
+        fn(x, y, count, cluster)
+
+        count++
       }
     }
   }
@@ -244,9 +248,18 @@ export class Game {
 
   // swap tiles between two positions
   swapTiles = (a, b) => {
+    this.moveHistory.push({ a, b })
+
     const temp = this.grid[a.x][a.y]
     this.grid[a.x][a.y] = this.grid[b.x][b.y]
     this.grid[b.x][b.y] = temp
+  }
+
+  undoMove = () => {
+    // I know it's weird to do it this way, but it makes animation easier
+    const lastMove = this.moveHistory.pop()
+    this.swapTiles(lastMove.a, lastMove.b)
+    this.moveHistory.pop()
   }
 
   // check for matches after making a move

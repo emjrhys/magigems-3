@@ -51,6 +51,15 @@ const colors = useState('colors', () => [
   'purple',
 ])
 
+const colorMap = useState('colorMap', () => ({
+  blue: '#009BF4',
+  red: '#DF2935',
+  orange: '#FF9C6B',
+  green: '#77BA99',
+  pink: '#FFB3CA',
+  purple: '#A95BD6',
+}))
+
 const gameOptions = {
   colors: colors.value,
   size: size.value,

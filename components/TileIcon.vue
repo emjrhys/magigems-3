@@ -1,5 +1,5 @@
 <template lang="pug">
-div.tile-icon-wrapper(:class='props.tile.type', :style='cssVars')
+div.tile-icon-wrapper(:class='tile.type', :style='cssVars')
   img.tile-icon(:src='iconSrc')
 </template>
 

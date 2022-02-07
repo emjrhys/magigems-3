@@ -1,12 +1,14 @@
 <template lang="pug">
-div.spellslot(:class='props.color')
-  Waves
+div.spellslot(:class='color')
+  Waves(:color='colorMap[color]')
 </template>
 
 <script setup lang="ts">
 const props = defineProps({
   color: String,
 })
+
+const colorMap = useState('colorMap')
 </script>
 
 <style lang="sass">
