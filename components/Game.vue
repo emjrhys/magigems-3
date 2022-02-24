@@ -5,14 +5,14 @@ div.game-wrapper__outer
       Grid(
         :game='game',
         :wallet-position='walletPosition',
-        :spellslot-positions='spellslotPositions'
+        :mana-pool-positions='manaPoolPositions'
       )
-    div.game-spellslot-wrapper
-      div.game-spellslot(
-        v-for='color in colors',
-        :ref='(el) => { if (el) spellslotRefs[color] = el; }'
+    div.game-mana-pool-wrapper
+      div.game-mana-pool(
+        v-for='manaPool in player.manaPools',
+        :ref='(el) => { if (el) manaPoolRefs[manaPool.color] = el; }'
       )
-        Spellslot(:color='color')
+        ManaPool(:manaPool='manaPool')
   div.game-toolbar
     div.game-toolbar-wallet
       img.game-toolbar-wallet-icon(ref='walletIconRef', src='/icons/coin.png')
@@ -31,10 +31,10 @@ const walletPosition = computed(() =>
   walletIconRef.value ? getElementPosition(walletIconRef.value) : undefined
 )
 
-const spellslotRefs = ref({})
-const spellslotPositions = computed(() => {
+const manaPoolRefs = ref({})
+const manaPoolPositions = computed(() => {
   const positions = reactive({})
-  for (const [color, el] of Object.entries(spellslotRefs.value)) {
+  for (const [color, el] of Object.entries(manaPoolRefs.value)) {
     positions[color] = getElementPosition(el)
   }
   return positions
@@ -78,11 +78,13 @@ const game = reactive(new Game(player, gameOptions))
 
       overflow: hidden
 
+      user-select: none
+
     &__inner
       display: flex
       align-items: center
 
-  &-spellslot
+  &-mana-pool
     &-wrapper
       display: flex
       flex-direction: column

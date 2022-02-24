@@ -17,6 +17,9 @@ const iconSrc = computed(() => {
     case 'coin':
       iconName = 'coin'
       break
+    case 'bomb':
+      iconName = 'bomb'
+      break
   }
   return `/icons/${iconName}.png`
 })

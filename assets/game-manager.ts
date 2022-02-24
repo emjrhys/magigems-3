@@ -7,7 +7,11 @@ const tileTypes = {
     matchType: 'color',
   },
   coin: {
-    spawnRate: 7,
+    spawnRate: 10,
+    matchType: 'adjacent',
+  },
+  bomb: {
+    spawnRate: 5,
     matchType: 'adjacent',
   },
 }
@@ -36,11 +40,11 @@ class Tile {
   delay = 0
   activated = ref(false)
 
-  constructor(colorOptions, delay = 0) {
+  constructor(type, colorOptions, delay = 0) {
     this.id = uuid.generate()
     this.delay = delay
 
-    this.type = getRandomType()
+    this.type = type
     this.properties = tileTypes[this.type]
 
     this.color = this.type === 'gem' ? _.sample(colorOptions) : undefined
@@ -78,7 +82,10 @@ export class Game {
       this.grid = reactive(
         Array.from(Array(this.size), () =>
           reactive(
-            Array.from(Array(this.size), () => new Tile(this.colorOptions))
+            Array.from(
+              Array(this.size),
+              () => new Tile(getRandomType(), this.colorOptions)
+            )
           )
         )
       )
@@ -173,7 +180,7 @@ export class Game {
   resolveClusters = () => {
     this.loopClusters((x, y) => {
       this.grid[x].splice(y, 1)
-      this.grid[x].push(new Tile(this.colorOptions))
+      this.grid[x].push(new Tile(getRandomType(), this.colorOptions))
     })
     this.clusters = []
   }
@@ -219,7 +226,9 @@ export class Game {
           const tile = this.grid[x].splice(y, 1)[0]
           this.player.collect(tile)
 
-          this.grid[x].push(new Tile(this.colorOptions, numInColumn))
+          this.grid[x].push(
+            new Tile(getRandomType(), this.colorOptions, numInColumn)
+          )
 
           numInColumn += 1
         }

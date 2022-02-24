@@ -35,7 +35,7 @@ import { sleep, getElementPosition } from '~/assets/helpers'
 const props = defineProps({
   game: Game,
   walletPosition: Object,
-  spellslotPositions: Object,
+  manaPoolPositions: Object,
 })
 
 const size = useState('size')
@@ -72,8 +72,33 @@ const leave = (el, done) => {
   if (data.type === 'coin') {
     targetPosition = props.walletPosition
     finalSize = 0.75
+  } else if (data.type === 'bomb') {
+    gsap.timeline({ onComplete: done }).to(
+      el,
+      {
+        scale: 0,
+        opacity: 0,
+        duration: 0.25,
+      },
+      0
+    )
+    return
   } else if (data.type === 'gem') {
-    targetPosition = props.spellslotPositions[data.color]
+    targetPosition = props.manaPoolPositions[data.color]
+
+    const manaPool = props.game.player.manaPools[data.color]
+    if (!manaPool.unlocked || manaPool.gemCharge >= manaPool.player.maxMana) {
+      gsap.timeline({ onComplete: done, delay: data.delay * 0.05 }).to(
+        el,
+        {
+          scale: 0,
+          opacity: 0,
+          duration: 0.25,
+        },
+        0
+      )
+      return
+    }
   }
 
   const destination = {
@@ -88,8 +113,8 @@ const leave = (el, done) => {
       y: 30 * (destination.y < 0 ? 1 : -1),
     },
     {
-      x: -10 * (destination.x < 0 ? 1 : -1),
-      y: 30 * (destination.y < 0 ? 1 : -1),
+      x: -15 * (destination.x < 0 ? 1 : -1),
+      y: 35 * (destination.y < 0 ? 1 : -1),
     },
     {
       x: destination.x,
@@ -246,8 +271,6 @@ const cssVars = computed(() => ({
   grid-template-columns: repeat(var(--gridSize), 1fr)
   grid-template-rows: repeat(var(--gridSize), 1fr)
   grid-gap: 0.5rem
-
-  user-select: none
 
   &-wrapper
     display: flex

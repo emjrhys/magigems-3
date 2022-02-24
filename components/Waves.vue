@@ -5,54 +5,51 @@ div(:style='cssVars')
     xmlns:xlink='http://www.w3.org/1999/xlink',
     viewbox='0 0 56 56',
     preserveaspectratio='none',
-    shape-rendering='auto',
-    :style='{ transform: `translateY(${Math.random() * 56}px)` }'
+    shape-rendering='auto'
   )
     defs
       path#gentle-wave(
         d='M 0 5 c 30 0 50 -5 80 -5 s 50 5 80 5 s 50 -5 80 -5 s 50 5 80 5 v 60 h -320 z'
       )
     g.parallax
-      use(xlink:href='#gentle-wave')
-      use(xlink:href='#gentle-wave')
-      use(xlink:href='#gentle-wave')
+      use(xlink:href='#gentle-wave', :fill='hexToRgbA(color, 0.3)')
+      use(xlink:href='#gentle-wave', :fill='hexToRgbA(color, 0.6)')
+      use(xlink:href='#gentle-wave', :fill='hexToRgbA(color, 1)')
 </template>
 
 <script setup lang="ts">
+import { hexToRgbA } from '~/assets/helpers'
 const props = defineProps({
   color: String,
 })
 
 const cssVars = computed(() => ({
   '--color': props.color,
+  '--animDelay': `${-10 * Math.random()}s`,
 }))
 </script>
 
 <style scoped lang="sass">
 .waves
-  // position: relative
   width: 100%
   height: 100%
-  transform: translateY(12px)
+  transform: translateY(-5px)
 
 .parallax
   & > use
     animation: move-forever 25s cubic-bezier(0.55, 0.5, 0.45, 0.5) infinite
 
   & > use:nth-child(1)
-    fill: rgba(var(--color), 0.3)
-    animation-delay: -4s
+    animation-delay: var(--animDelay)
     animation-duration: 3s
 
   & > use:nth-child(2)
-    fill: rgba(var(--color), 0.6)
-    animation-delay: -5s
+    animation-delay: calc(var(animDelay) - 2s)
     animation-duration: 5s
 
   & > use:nth-child(3)
-    fill: var(--color)
-    animation-delay: -6s
-    animation-duration: 5s
+    animation-delay: calc(var(animDelay) - 3s)
+    animation-duration: 8s
 
 @keyframes move-forever
   0%
