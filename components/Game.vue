@@ -1,18 +1,17 @@
 <template lang="pug">
-div.game-wrapper__outer
-  div.game-wrapper__inner
-    div.game-grid
-      Grid(
-        :game='game',
-        :wallet-position='walletPosition',
-        :mana-pool-positions='manaPoolPositions'
-      )
-    div.game-mana-pool-wrapper
-      div.game-mana-pool(
-        v-for='manaPool in player.manaPools',
-        :ref='(el) => { if (el) manaPoolRefs[manaPool.color] = el; }'
-      )
-        ManaPool(:manaPool='manaPool')
+div.game-wrapper
+  div.game-grid
+    Grid(
+      :game='game',
+      :wallet-position='walletPosition',
+      :mana-pool-positions='manaPoolPositions'
+    )
+  div.game-mana-pool-wrapper
+    div.game-mana-pool(
+      v-for='manaPool in player.manaPools',
+      :ref='(el) => { if (el) manaPoolRefs[manaPool.color] = el; }'
+    )
+      ManaPool(:manaPool='manaPool')
   div.game-toolbar
     div.game-toolbar-wallet
       img.game-toolbar-wallet-icon(ref='walletIconRef', src='/icons/coin.png')
@@ -69,63 +68,72 @@ const player = reactive(new Player())
 const game = reactive(new Game(player, gameOptions))
 </script>
 
-<style lang="sass">
-.game
-  &-wrapper
-    &__outer
-      display: flex
-      flex-direction: column
+<style lang="scss">
+.game {
+  &-wrapper {
+    display: grid;
+    grid-template: "left  game  right ." auto
+                   ".... bottom ..... ." 3rem
+                   / 3.5rem auto 3.5rem;
+    grid-gap: 1rem;
 
-      overflow: hidden
+    overflow: hidden;
+    user-select: none;
+  }
 
-      user-select: none
+  &-grid {
+    grid-area: game;
+  }
 
-    &__inner
-      display: flex
-      align-items: center
+  &-mana-pool {
+    &-wrapper {
+      grid-area: right;
 
-  &-mana-pool
-    &-wrapper
-      display: flex
-      flex-direction: column
-      justify-content: space-between
-      align-items: center
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      align-items: center;
 
-      height: 20rem
-      margin-left: 1rem
-      padding: 0.5rem
+      height: 20rem;
+      padding: 0.5rem;
 
-      background-color: #fff
-      border-radius: 2rem
+      background-color: #fff;
+      border-radius: 2rem;
+    }
+  }
 
-  &-toolbar
-    display: flex
-    justify-content: space-between
-    align-items: center
+  &-toolbar {
+    grid-area: bottom;
 
-    margin-top: 1rem
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
 
-    &-wallet
-      display: flex
-      align-items: center
+    &-wallet {
+      display: flex;
+      align-items: center;
 
-      width: 6rem
-      height: 3rem
-      padding-left: 0.5rem
+      width: 6rem;
+      height: 3rem;
+      padding-left: 0.5rem;
 
-      background-color: #fff
-      border-radius: 1.5rem
+      background-color: #fff;
+      border-radius: 1.5rem;
 
-      font-size: 1.35rem
-      font-weight: 300
+      font-size: 1.35rem;
+      font-weight: 300;
 
 
-      &-icon
-        position: relative
-        top: -1px
+      &-icon {
+        position: relative;
+        top: -1px;
 
-        height: 32px
-        width: 32px
+        height: 32px;
+        width: 32px;
 
-        margin-right: 0.35rem
+        margin-right: 0.35rem;
+      }
+    }
+  }
+}
 </style>
