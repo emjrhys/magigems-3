@@ -44,11 +44,11 @@ const cssVars = computed(() => ({
     animation-duration: 3s
 
   & > use:nth-child(2)
-    animation-delay: calc(var(animDelay) - 2s)
+    animation-delay: calc(var(--animDelay) - 2s)
     animation-duration: 5s
 
   & > use:nth-child(3)
-    animation-delay: calc(var(animDelay) - 3s)
+    animation-delay: calc(var(--animDelay) - 3s)
     animation-duration: 8s
 
 @keyframes move-forever
