@@ -5,7 +5,7 @@ div.mana-pool(
   :style='slotStyle',
   @click='handleClick'
 )
-  div.mana-pool-count(:style='countStyle') {{ currentCharge }}
+  //- div.mana-pool-count(:style='countStyle') {{ currentCharge }}
   Waves.mana-pool-waves(:color='colorMap[manaPool.color]', :style='wavesStyle')
 </template>
 
