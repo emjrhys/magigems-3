@@ -95,6 +95,7 @@ const game = reactive(new Game(player, gameOptions))
       align-items: center;
 
       height: 20rem;
+      margin: auto 0; // I hate using this
       padding: 0.5rem;
 
       background-color: #fff;
